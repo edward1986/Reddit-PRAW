@@ -15,7 +15,7 @@ def generate_content(prompt):
         raise Exception(f"Error generating content: {result.stderr.strip()}")
     response = result.stdout.strip()
     promotion = "\n\n---\n🌐 Visit my blog for more insights: [Edwardize](https://edwardize.blogspot.com/) \n---\n"
-    return + promotion + response + promotion
+    return promotion + response + promotion
 
 # Initialize Reddit instance
 reddit = praw.Reddit(
