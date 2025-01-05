@@ -21,7 +21,9 @@ reddit = praw.Reddit(
     username=os.getenv("REDDIT_USERNAME"),  # Ensure this is set in your environment variables
     password=os.getenv("REDDIT_PASSWORD")   # Ensure this is set in your environment variables
 )
-
+flair_choices = subreddit.flair.link_templates
+for flair in flair_choices:
+    print(f"ID: {flair['id']}, Text: {flair['text']}")
 # Generate content using Ollama
 prompt = "Write an engaging blog post about the latest trends in AI."
 content = generate_content(prompt)
