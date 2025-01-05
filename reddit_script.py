@@ -27,11 +27,19 @@ reddit = praw.Reddit(
 subreddit_name = 'phtravel'  # Replace with your target subreddit
 subreddit = reddit.subreddit(subreddit_name)
 
-# Fetch a random post from the subreddit
-random_post = subreddit.random()
-if random_post is None:
-    raise Exception(f"No random post found in r/{subreddit_name}")
-print(f"Selected Post: {random_post.title} (ID: {random_post.id})")
+# Attempt to fetch a random post from the subreddit
+try:
+    random_post = subreddit.random()
+    if random_post is None:
+        raise Exception("Random post retrieval returned None.")
+except Exception as e:
+    print(f"Random post retrieval failed: {e}")
+    # Fallback to selecting a random post from the 'hot' submissions
+    hot_posts = list(subreddit.hot(limit=100))  # Fetch up to 100 hot posts
+    if not hot_posts:
+        raise Exception(f"No posts available in r/{subreddit_name}.")
+    random_post = random.choice(hot_posts)
+    print(f"Selected Post from 'hot': {random_post.title} (ID: {random_post.id})")
 
 # Fetch comments from the selected post
 random_post.comments.replace_more(limit=0)  # Load all top-level comments
@@ -42,7 +50,7 @@ comments = [comment for comment in comments if isinstance(comment, praw.models.C
 
 # Select a random comment
 if not comments:
-    raise Exception(f"No comments found in the selected post (ID: {random_post.id})")
+    raise Exception(f"No comments found in the selected post (ID: {random_post.id}).")
 selected_comment = random.choice(comments)
 print(f"Selected Comment ID: {selected_comment.id}")
 
