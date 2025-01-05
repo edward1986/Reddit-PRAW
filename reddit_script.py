@@ -24,7 +24,7 @@ reddit = praw.Reddit(
     password=os.getenv("REDDIT_PASSWORD")   # Ensure this is set in your environment variables
 )
 
-subreddit_name = 'phtravel'  # Replace with your target subreddit
+subreddit_name = 'Philippines'  # Replace with your target subreddit
 subreddit = reddit.subreddit(subreddit_name)
 
 # Attempt to fetch a random post from the subreddit
