@@ -2,7 +2,7 @@ name: Automate Reddit Posting
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Runs at the start of every hour
+    - cron: '*/10 * * * *'  # Runs at the start of every hour
   workflow_dispatch:
 
 jobs:
