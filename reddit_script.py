@@ -1,6 +1,5 @@
 import os
 import praw
-
 import subprocess
 def generate_content(prompt):
     result = subprocess.run(
