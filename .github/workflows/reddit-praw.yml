@@ -35,4 +35,4 @@ jobs:
           USERNAME: ${{ secrets.REDDIT_USERNAME }}
           PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
         run: |
-          python index.py
+          python reddit_script.py
