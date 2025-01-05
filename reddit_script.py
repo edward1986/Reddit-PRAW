@@ -3,6 +3,11 @@ import praw
 import subprocess
 import random
 import time
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+logger = logging.getLogger()
 
 def generate_content(prompt):
     result = subprocess.run(
@@ -22,53 +27,73 @@ reddit = praw.Reddit(
     client_id=os.getenv("REDDIT_CLIENT_ID"),
     client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
     user_agent=os.getenv("REDDIT_USER_AGENT"),
-    username=os.getenv("REDDIT_USERNAME"),  # Ensure this is set in your environment variables
-    password=os.getenv("REDDIT_PASSWORD")   # Ensure this is set in your environment variables
+    username=os.getenv("REDDIT_USERNAME"),
+    password=os.getenv("REDDIT_PASSWORD")
 )
 
-popular_subreddits = [sub.display_name for sub in reddit.subreddits.popular(limit=50)]
+def fetch_post_with_comments(subreddit, retries=10):
+    """Fetch a random or hot post with comments."""
+    attempts = 0
+    while attempts < retries:
+        try:
+            logger.info("Attempting to fetch a random post...")
+            random_post = subreddit.random()
+            if random_post is None:
+                raise Exception("Random post retrieval returned None.")
 
-subreddit_name = random.choice(popular_subreddits)
-subreddit = reddit.subreddit(subreddit_name)
+            random_post.comments.replace_more(limit=0)
+            comments = [comment for comment in random_post.comments if isinstance(comment, praw.models.Comment)]
+            if comments:
+                logger.info(f"Selected Post: {random_post.title} (ID: {random_post.id})")
+                return random_post, comments
 
-# Attempt to fetch a random post from the subreddit
-try:
-    random_post = subreddit.random()
-    if random_post is None:
-        raise Exception("Random post retrieval returned None.")
-except Exception as e:
-    print(f"Random post retrieval failed: {e}")
-    # Fallback to selecting a random post from the 'hot' submissions
-    hot_posts = list(subreddit.hot(limit=100))  # Fetch up to 100 hot posts
-    if not hot_posts:
-        raise Exception(f"No posts available in r/{subreddit_name}.")
-    random_post = random.choice(hot_posts)
-    print(f"Selected Post from 'hot': {random_post.title} (ID: {random_post.id})")
+            logger.warning(f"No comments found in post (ID: {random_post.id}). Retrying...")
+        except Exception as e:
+            logger.warning(f"Random post retrieval failed: {e}")
 
-# Fetch comments from the selected post
-random_post.comments.replace_more(limit=0)  # Load all top-level comments
-comments = random_post.comments.list()
+        # Fallback to hot posts
+        logger.info("Falling back to 'hot' posts...")
+        hot_posts = list(subreddit.hot(limit=100))
+        if not hot_posts:
+            raise Exception(f"No posts available in r/{subreddit.display_name}.")
+        random_post = random.choice(hot_posts)
+        random_post.comments.replace_more(limit=0)
+        comments = [comment for comment in random_post.comments if isinstance(comment, praw.models.Comment)]
+        if comments:
+            logger.info(f"Selected Post from 'hot': {random_post.title} (ID: {random_post.id})")
+            return random_post, comments
 
-# Filter out comments that are instances of MoreComments
-comments = [comment for comment in comments if isinstance(comment, praw.models.Comment)]
+        attempts += 1
 
-# Select a random comment
-if not comments:
-    raise Exception(f"No comments found in the selected post (ID: {random_post.id}).")
-selected_comment = random.choice(comments)
-print(f"Selected Comment ID: {selected_comment.id}")
+    raise Exception("Max retries reached. Could not find a post with comments.")
 
-# Generate content using Ollama
-prompt = f"Reply to the following comment: '{selected_comment.body}'"
-response_content = generate_content(prompt)
-print(f"Generated Response: {response_content}")
+def main():
+    popular_subreddits = [sub.display_name for sub in reddit.subreddits.popular(limit=50)]
+    subreddit_name = random.choice(popular_subreddits)
+    subreddit = reddit.subreddit(subreddit_name)
+    logger.info(f"Selected Subreddit: {subreddit_name}")
 
-# Reply to the selected comment
-try:
-    selected_comment.reply(response_content)
-    print(f"Replied to comment {selected_comment.id}")
-    time.sleep(10)  # Sleep to respect Reddit's API rate limits
-except praw.exceptions.RedditAPIException as e:
-    print(f"Reddit API error: {e}")
-except Exception as e:
-    print(f"An error occurred: {e}")
+    try:
+        random_post, comments = fetch_post_with_comments(subreddit)
+        selected_comment = random.choice(comments)
+        logger.info(f"Selected Comment ID: {selected_comment.id}")
+
+        # Generate content and reply
+        prompt = f"Reply to the following comment: '{selected_comment.body}'"
+        response_content = generate_content(prompt)
+        logger.info(f"Generated Response: {response_content}")
+
+        selected_comment.reply(response_content)
+        logger.info(f"Replied to comment {selected_comment.id}")
+        time.sleep(10)  # Sleep to respect Reddit's API rate limits
+    except praw.exceptions.RedditAPIException as e:
+        if "RATELIMIT" in str(e):
+            logger.warning("Rate limit exceeded. Retrying in 10 minutes...")
+            time.sleep(600)  # Wait for 10 minutes
+        else:
+            logger.error(f"Reddit API error: {e}")
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+
+if __name__ == "__main__":
+    main()
