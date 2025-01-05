@@ -1,7 +1,7 @@
 import os
 import praw
 import subprocess
-
+import random
 def generate_content(prompt):
     result = subprocess.run(
         ["ollama", "run", "llama3", prompt],
