@@ -23,7 +23,7 @@ prompt = "Write an engaging blog post about the latest trends in AI."
 content = generate_content(prompt)
 
 # Post to Reddit
-subreddit = reddit.subreddit('popular')
+subreddit = reddit.subreddit('r/popular')
 title = "Latest Trends in AI"
 submission = subreddit.submit(title, selftext=content)
 
