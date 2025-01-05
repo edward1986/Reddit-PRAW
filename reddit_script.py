@@ -39,7 +39,7 @@ try:
         flair_text = selected_flair['text']
         print(f"Selected Flair - ID: {flair_id}, Text: {flair_text}")
         submission = subreddit.submit(title, selftext=content, flair_id=flair_id)
-    else
+    else:
         submission = subreddit.submit(title, selftext=content)
     print(f"Post submitted to r/{subreddit_name}")
 except praw.exceptions.RedditAPIException as e:
