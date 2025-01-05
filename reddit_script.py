@@ -28,7 +28,7 @@ content = generate_content(prompt)
 print(content)
 
 # Post to Reddit
-subreddit_name = 'popular'  # Corrected subreddit name without 'r/' prefix
+subreddit_name = 'ChikaPH'  # Corrected subreddit name without 'r/' prefix
 try:
     subreddit = reddit.subreddit(subreddit_name)
     title = "Latest Trends in AI"
