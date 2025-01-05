@@ -21,9 +21,7 @@ reddit = praw.Reddit(
     username=os.getenv("REDDIT_USERNAME"),  # Ensure this is set in your environment variables
     password=os.getenv("REDDIT_PASSWORD")   # Ensure this is set in your environment variables
 )
-flair_choices = subreddit.flair.link_templates
-for flair in flair_choices:
-    print(f"ID: {flair['id']}, Text: {flair['text']}")
+
 # Generate content using Ollama
 prompt = "Write an engaging blog post about the latest trends in AI."
 content = generate_content(prompt)
@@ -34,7 +32,15 @@ subreddit_name = 'ChikaPH'  # Corrected subreddit name without 'r/' prefix
 try:
     subreddit = reddit.subreddit(subreddit_name)
     title = "Latest Trends in AI"
-    submission = subreddit.submit(title, selftext=content)
+    flair_templates = list(subreddit.flair.link_templates)
+    if flair_templates:
+        selected_flair = random.choice(flair_templates)
+        flair_id = selected_flair['id']
+        flair_text = selected_flair['text']
+        print(f"Selected Flair - ID: {flair_id}, Text: {flair_text}")
+        submission = subreddit.submit(title, selftext=content, flair_id=flair_id)
+    else
+        submission = subreddit.submit(title, selftext=content)
     print(f"Post submitted to r/{subreddit_name}")
 except praw.exceptions.RedditAPIException as e:
     print(f"An error occurred: {e}")
