@@ -29,10 +29,10 @@ jobs:
 
       - name: Run Script
         env:
-          CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-          USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
-          USERNAME: ${{ secrets.REDDIT_USERNAME }}
-          PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+          REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}  # Optional
+          REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}  # Optional
         run: |
           python reddit_script.py
