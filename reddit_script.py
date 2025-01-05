@@ -21,7 +21,7 @@ reddit = praw.Reddit(
 
 prompt = "Write an engaging blog post about the latest trends in AI."
 content = generate_content(prompt)
-
+print(content)
 # Post to Reddit
 subreddit = reddit.subreddit('r/popular')
 title = "Latest Trends in AI"
