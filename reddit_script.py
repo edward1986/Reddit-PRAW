@@ -2,6 +2,30 @@ import os
 import praw
 import subprocess
 import random
+
+# Define the minimum title length required by the subreddit
+MIN_TITLE_LENGTH = 20
+
+def generate_title():
+    # Lists of travel-related words
+    topics = ['Beaches', 'Mountains', 'Cities', 'Deserts', 'Forests', 'Islands', 'Road Trips', 'Cultural Festivals']
+    adjectives = ['Amazing', 'Unforgettable', 'Breathtaking', 'Hidden', 'Enchanting', 'Exotic', 'Adventurous', 'Scenic']
+    descriptors = ['Destinations', 'Journeys', 'Experiences', 'Adventures', 'Escapes', 'Getaways', 'Expeditions', 'Trails']
+    
+    # Randomly select words from each list
+    topic = random.choice(topics)
+    adjective = random.choice(adjectives)
+    descriptor = random.choice(descriptors)
+    
+    # Construct the title
+    title = f"{adjective} {descriptor} in {topic}"
+    
+    # Ensure the title meets the minimum length requirement
+    if len(title) < MIN_TITLE_LENGTH:
+        raise ValueError(f"Generated title is too short: {title}")
+    
+    return title
+
 def generate_content(prompt):
     result = subprocess.run(
         ["ollama", "run", "llama3", prompt],
@@ -23,7 +47,7 @@ reddit = praw.Reddit(
 )
 
 # Generate content using Ollama
-prompt = "Write an engaging blog post about the latest trends in AI."
+prompt = "Describe a lesser-known travel destination that offers unique cultural experiences and natural beauty."
 content = generate_content(prompt)
 print(content)
 
@@ -31,7 +55,7 @@ print(content)
 subreddit_name = 'phtravel'  # Corrected subreddit name without 'r/' prefix
 try:
     subreddit = reddit.subreddit(subreddit_name)
-    title = "Latest Trends in AI"
+    title = generate_title()
     flair_templates = list(subreddit.flair.link_templates)
     if flair_templates:
         selected_flair = random.choice(flair_templates)
