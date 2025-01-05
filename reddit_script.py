@@ -3,29 +3,6 @@ import praw
 import subprocess
 import random
 
-# Define the minimum title length required by the subreddit
-MIN_TITLE_LENGTH = 20
-
-def generate_title():
-    # Lists of travel-related words
-    topics = ['Beaches', 'Mountains', 'Cities', 'Deserts', 'Forests', 'Islands', 'Road Trips', 'Cultural Festivals']
-    adjectives = ['Amazing', 'Unforgettable', 'Breathtaking', 'Hidden', 'Enchanting', 'Exotic', 'Adventurous', 'Scenic']
-    descriptors = ['Destinations', 'Journeys', 'Experiences', 'Adventures', 'Escapes', 'Getaways', 'Expeditions', 'Trails']
-    
-    # Randomly select words from each list
-    topic = random.choice(topics)
-    adjective = random.choice(adjectives)
-    descriptor = random.choice(descriptors)
-    
-    # Construct the title
-    title = f"{adjective} {descriptor} in {topic}"
-    
-    # Ensure the title meets the minimum length requirement
-    if len(title) < MIN_TITLE_LENGTH:
-        raise ValueError(f"Generated title is too short: {title}")
-    
-    return title
-
 def generate_content(prompt):
     result = subprocess.run(
         ["ollama", "run", "llama3", prompt],
@@ -46,31 +23,29 @@ reddit = praw.Reddit(
     password=os.getenv("REDDIT_PASSWORD")   # Ensure this is set in your environment variables
 )
 
-# Generate content using Ollama
-prompt = "Describe a lesser-known travel destination that offers unique cultural experiences and natural beauty."
-content = generate_content(prompt)
-print(content)
+subreddit_name = 'phtravel'  # Replace with your target subreddit
+subreddit = reddit.subreddit(subreddit_name)
 
-# Post to Reddit
-subreddit_name = 'phtravel'  # Corrected subreddit name without 'r/' prefix
-try:
-    subreddit = reddit.subreddit(subreddit_name)
-    title = generate_title()
-    flair_templates = list(subreddit.flair.link_templates)
-    if flair_templates:
-        selected_flair = random.choice(flair_templates)
-        flair_id = selected_flair['id']
-        flair_text = selected_flair['text']
-        print(f"Selected Flair - ID: {flair_id}, Text: {flair_text}")
-        submission = subreddit.submit(title, selftext=content, flair_id=flair_id)
-    else:
-        submission = subreddit.submit(title, selftext=content)
-    print(f"Post submitted to r/{subreddit_name}")
-except praw.exceptions.RedditAPIException as e:
-    print(f"An error occurred: {e}")
+# Fetch top posts from the subreddit
+top_posts = subreddit.top(limit=5)  # Adjust the limit as needed
 
-# Test connection
-try:
-    print(f"Logged in as: {reddit.user.me()}")
-except Exception as e:
-    print(f"Failed to retrieve user information: {e}")
+# Iterate through each top post
+for post in top_posts:
+    print(f"Processing Post: {post.title} (ID: {post.id})")
+    post.comments.replace_more(limit=0)  # Load all top-level comments
+    top_level_comments = post.comments.list()
+
+    # Iterate through each top-level comment
+    for comment in top_level_comments:
+        if isinstance(comment, praw.models.Comment):
+            print(f"Processing Comment ID: {comment.id}")
+            prompt = f"Reply to the following comment: '{comment.body}'"
+            try:
+                response_content = generate_content(prompt)
+                comment.reply(response_content)
+                print(f"Replied to comment {comment.id}")
+                time.sleep(10)  # Sleep to respect Reddit's API rate limits
+            except praw.exceptions.RedditAPIException as e:
+                print(f"Reddit API error: {e}")
+            except Exception as e:
+                print(f"An error occurred: {e}")
