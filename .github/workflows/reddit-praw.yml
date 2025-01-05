@@ -1,0 +1,35 @@
+name: Run Reddit PRAW Script
+
+on:
+  push:
+    branches:
+      - main  # Trigger workflow on push to the main branch
+  workflow_dispatch:  # Allow manual trigger of the workflow
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9  # Specify Python version
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install praw  # Add praw explicitly or via requirements.txt
+
+    - name: Run Reddit PRAW script
+      env:
+        REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+        REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+        REDDIT_USER_AGENT: ${{ secrets.REDDIT_USER_AGENT }}
+        REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}  # Optional
+        REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}  # Optional
+      run: |
+        python reddit_script.py
